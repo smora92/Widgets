@@ -3,11 +3,24 @@ import axios from "axios";
 
 const Search = () => {
     const [term, setTerm] = useState('programming') //the default search term on first render
+    const [debouncedTerm, setDebouncedTerm] = useState(term) //triggers search only once per user input
     const [results, setResults] = useState([])
 
     // console.log(results)
+    //the useEffect are for watching the term and the debounced term
 
     useEffect(() => {
+        const timeId = setTimeout(() => {
+            setDebouncedTerm(term)
+        }, 1000) //for as long as the user is typing under 1sec the search won't trigger.And for every key press
+        //the timer resets to 1s and only when 1s elapses then the search triggers
+        return () => {
+            clearTimeout(timeId)
+        }
+    }, [term])
+
+    useEffect(() => {
+
         const search = async () => {
             const { data } = await axios.get('https://en.wikipedia.org/w/api.php', {
                 params: {
@@ -15,28 +28,32 @@ const Search = () => {
                     list: "search",
                     origin: "*",
                     format: "json",
-                    srsearch: term,
+                    srsearch: debouncedTerm,
                 }
             })
             setResults(data.query.search)
         }
+        search()
+    }, [debouncedTerm])
 
-        if (term && !results.length) {
-            search() //the if statement ensures our app renders immediately first time without wait
+    // useEffect(() => {
 
-            const timeoutId = setTimeout(() => { // this fxn prevents autorerender for ever letter typed from here
-                if (term) {
-                    search()
-                }
-            }, 1000) //the setTimeout sets timer search in 500ms and resets timer for ever clearTimeout()
+    //     if (term) {
+    //         search() //the if statement ensures our app renders immediately first time without wait
 
-            return () => {                //this cancels the previous timer 
-                clearTimeout(timeoutId)
-            }                                 //to here
-        }
+    //         const timeoutId = setTimeout(() => { // this fxn prevents autorerender for ever letter typed from here
+    //             if (term) {
+    //                 search()
+    //             }
+    //         }, 1000) //the setTimeout sets timer search in 500ms and resets timer for ever clearTimeout()
+
+    //         return () => {                //this cancels the previous timer 
+    //             clearTimeout(timeoutId)
+    //         }                                 //to here
+    //     }
 
 
-    }, [term])
+    // }, [term])
 
     //this second argument controls when our code gets executed. could be an array, empty array or 
     //nothing, never an object or function. Empty [] will only run at initial render, nothing will run initial &
